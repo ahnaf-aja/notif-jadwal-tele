@@ -66,10 +66,10 @@ def check_schedule():
         # mapping title
         title_col = 'title' if 'title' in df.columns else df.columns[0]
 
-        # =========================
-        # ⏰ FORMAT WAKTU (FIX TBA)
-        # =========================
-     def format_time(row):
+# =========================
+# ⏰ FORMAT WAKTU (FIX TBA)
+# =========================
+def format_time(row):
     start = row.get('start_time')
     end = row.get('end_time')
 
@@ -80,7 +80,6 @@ def check_schedule():
     else:
         return "TBA"
 
-# WAJIB: apply ke dataframe
 df['time_fmt'] = df.apply(format_time, axis=1)
         # =========================
         # 🆔 UNIQUE ID (ANTI DUPLICATE)
