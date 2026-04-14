@@ -69,17 +69,19 @@ def check_schedule():
         # =========================
         # ⏰ FORMAT WAKTU (FIX TBA)
         # =========================
-      def format_time(row):
+     def format_time(row):
     start = row.get('start_time')
     end = row.get('end_time')
 
-    # handle NaN (float)
     if pd.notna(start) and pd.notna(end):
         return f"{str(start)[:5]} - {str(end)[:5]}"
     elif pd.notna(start):
         return str(start)[:5]
     else:
         return "TBA"
+
+# WAJIB: apply ke dataframe
+df['time_fmt'] = df.apply(format_time, axis=1)
         # =========================
         # 🆔 UNIQUE ID (ANTI DUPLICATE)
         # =========================
