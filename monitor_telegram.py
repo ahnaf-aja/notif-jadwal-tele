@@ -53,7 +53,7 @@ def check_schedule():
     global previous_ids
 
     try:
-        res = requests.get(URL)
+        res = requests.get(URL, timeout=10)
         data = res.json()['data']
         df = pd.DataFrame(data)
 
@@ -61,28 +61,41 @@ def check_schedule():
             print("⚠️ Data kosong")
             return
 
-        # convert date
         df['date'] = pd.to_datetime(df['date'])
 
-        # mapping kolom title
+        # mapping title
         title_col = 'title' if 'title' in df.columns else df.columns[0]
 
         # =========================
-        # OPTIONAL: FILTER BESOK
+        # ⏰ FORMAT WAKTU (FIX TBA)
         # =========================
-        tomorrow = pd.Timestamp.today() + pd.Timedelta(days=1)
-        df = df[df['date'].dt.date == tomorrow.date()]
+        def format_time(row):
+            start = row.get('start_time')
+            end = row.get('end_time')
+
+            if start and end:
+                return f"{start[:5]} - {end[:5]}"
+            elif start:
+                return start[:5]
+            else:
+                return "TBA"
+
+        df['time_fmt'] = df.apply(format_time, axis=1)
 
         # =========================
-        # UNIQUE ID
+        # 🆔 UNIQUE ID (ANTI DUPLICATE)
         # =========================
-        df['uid'] = df.apply(lambda x: f"{x['date']}_{x[title_col]}", axis=1)
+        df['uid'] = df.apply(
+            lambda x: f"{x['date']}_{x[title_col]}_{x['time_fmt']}",
+            axis=1
+        )
+
         current_ids = set(df['uid'])
 
-        print(f"🔍 Cek jadwal... {len(current_ids)} event besok")
+        print(f"🔍 Cek jadwal... total {len(current_ids)} event")
 
         # =========================
-        # DETEKSI DATA BARU
+        # 🚨 DETEKSI EVENT BARU
         # =========================
         new_ids = current_ids - previous_ids
 
@@ -90,13 +103,26 @@ def check_schedule():
             new_events = df[df['uid'].isin(new_ids)]
 
             for _, row in new_events.iterrows():
+
+                # label waktu (biar informatif)
+                today = pd.Timestamp.today().date()
+                event_date = row['date'].date()
+
+                if event_date == today:
+                    label = "HARI INI"
+                elif event_date == today + pd.Timedelta(days=1):
+                    label = "BESOK"
+                else:
+                    label = "UPCOMING"
+
                 msg = f"""
 🚨 JADWAL BARU JKT48!
 
 🎭 {row[title_col]}
-📅 {row['date'].strftime('%d %B %Y')}
-⏰ {row.get('time', 'TBA')} WIB
+📅 {row['date'].strftime('%d %B %Y')} ({label})
+⏰ {row['time_fmt']} WIB
 """
+
                 send_telegram(msg)
 
             print(f"✅ {len(new_events)} notif terkirim!")
@@ -105,15 +131,13 @@ def check_schedule():
             print("✔️ Tidak ada jadwal baru")
 
         # =========================
-        # UPDATE CACHE
+        # 💾 UPDATE CACHE
         # =========================
         previous_ids = current_ids
         save_cache(previous_ids)
 
     except Exception as e:
         print("❌ Error:", e)
-
-
 # =========================
 # SCHEDULER
 # =========================
