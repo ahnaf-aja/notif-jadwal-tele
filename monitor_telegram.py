@@ -66,21 +66,22 @@ def check_schedule():
         # mapping title
         title_col = 'title' if 'title' in df.columns else df.columns[0]
 
-# =========================
-# ⏰ FORMAT WAKTU (FIX TBA)
-# =========================
-def format_time(row):
-    start = row.get('start_time')
-    end = row.get('end_time')
+        # =========================
+        # ⏰ FORMAT WAKTU (FIX TBA)
+        # =========================
+        def format_time(row):
+            start = row.get('start_time')
+            end = row.get('end_time')
 
-    if pd.notna(start) and pd.notna(end):
-        return f"{str(start)[:5]} - {str(end)[:5]}"
-    elif pd.notna(start):
-        return str(start)[:5]
-    else:
-        return "TBA"
+            if pd.notna(start) and pd.notna(end):
+                return f"{str(start)[:5]} - {str(end)[:5]}"
+            elif pd.notna(start):
+                return str(start)[:5]
+            else:
+                return "TBA"
 
-df['time_fmt'] = df.apply(format_time, axis=1)
+        df['time_fmt'] = df.apply(format_time, axis=1)
+
         # =========================
         # 🆔 UNIQUE ID (ANTI DUPLICATE)
         # =========================
@@ -102,8 +103,6 @@ df['time_fmt'] = df.apply(format_time, axis=1)
             new_events = df[df['uid'].isin(new_ids)]
 
             for _, row in new_events.iterrows():
-
-                # label waktu (biar informatif)
                 today = pd.Timestamp.today().date()
                 event_date = row['date'].date()
 
@@ -129,6 +128,11 @@ df['time_fmt'] = df.apply(format_time, axis=1)
         else:
             print("✔️ Tidak ada jadwal baru")
 
+        previous_ids = current_ids
+        save_cache(previous_ids)
+
+    except Exception as e:
+        print("❌ Error:", e)
         # =========================
         # 💾 UPDATE CACHE
         # =========================
